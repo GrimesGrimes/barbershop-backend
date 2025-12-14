@@ -22,7 +22,7 @@ const PORT = Number(process.env.PORT) || 3000;
 
 
 // Normalize URLs by removing trailing slashes
-const normalizeOrigin = (u: string) => u.trim().replace(/\/$/, "");
+const normalizeOrigin = (u: string) => u.trim().replace(/\/+$/, "");
 
 // Configure allowed origins
 const allowlist = [
@@ -69,7 +69,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // API Routes
@@ -86,8 +86,8 @@ app.use(errorMiddleware);
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;
