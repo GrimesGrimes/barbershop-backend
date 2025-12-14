@@ -63,7 +63,7 @@ async function main() {
     const services = [
         {
             name: 'Corte clásico',
-            description: 'Corte tradicional con tijera y máquina',
+            description: 'Corte tradicional con tijera y máquina sin degradado',
             durationMin: 35,
             price: 10
         },
