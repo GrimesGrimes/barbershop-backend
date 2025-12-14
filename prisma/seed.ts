@@ -7,15 +7,15 @@ async function main() {
     console.log('🌱 Seeding database...');
 
     // Create owner account
-    const ownerPassword = await bcrypt.hash('owner123', 10);
+    const ownerPassword = await bcrypt.hash('Admin123', 10);
     const owner = await prisma.user.upsert({
-        where: { phone: '+573001234567' },
+        where: { phone: '+51987654521' },
         update: {},
         create: {
-            fullName: 'Juan Pérez',
-            email: 'juan@barberia.com',
-            phone: '+573001234567',
-            username: 'barbero_juan',
+            fullName: 'Admin',
+            email: 'admin@admin.com',
+            phone: '+51987654521',
+            username: 'Admin',
             passwordHash: ownerPassword,
             role: UserRole.OWNER,
             phoneVerified: true
@@ -30,7 +30,7 @@ async function main() {
         create: {
             ownerId: owner.id,
             name: 'Barbería El Clásico',
-            phone: '+573001234567',
+            phone: '+51987654321',
             address: 'Calle 45 #23-10',
             city: 'Lima',
             currency: 'PEN',
@@ -43,13 +43,13 @@ async function main() {
     // Create sample client
     const clientPassword = await bcrypt.hash('client123', 10);
     const client = await prisma.user.upsert({
-        where: { phone: '+573009876543' },
+        where: { phone: '+51987654321' },
         update: {},
         create: {
-            fullName: 'Carlos Ramírez',
-            email: 'carlos@example.com',
-            phone: '+573009876543',
-            username: 'carlos_r',
+            fullName: 'Cliente Prueba',
+            email: 'cliente@cliente.com',
+            phone: '+51987654321',
+            username: 'ClientePrueba',
             passwordHash: clientPassword,
             role: UserRole.CLIENT,
             phoneVerified: true,
@@ -95,7 +95,8 @@ async function main() {
         { weekday: 3, startTime: '09:00', endTime: '18:00' }, // Wednesday
         { weekday: 4, startTime: '09:00', endTime: '18:00' }, // Thursday
         { weekday: 5, startTime: '09:00', endTime: '18:00' }, // Friday
-        { weekday: 6, startTime: '09:00', endTime: '14:00' }  // Saturday (half day)
+        { weekday: 6, startTime: '09:00', endTime: '14:00' }, // Saturday (half day)
+        { weekday: 7, startTime: '09:00', endTime: '14:00' }  // Sunday (closed)
     ];
 
     for (const schedule of schedules) {
