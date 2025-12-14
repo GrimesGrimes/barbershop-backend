@@ -21,6 +21,9 @@ export const mailer = nodemailer.createTransport({
         user,
         pass,
     },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 10_000,
     tls: process.env.NODE_ENV !== 'production' ? { rejectUnauthorized: false } : undefined,
 });
 

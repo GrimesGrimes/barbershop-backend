@@ -82,8 +82,10 @@ export class AuthService {
         // Generate token
         const token = this.generateToken(user.id, user.role);
 
-        // Send email verification code
-        await this.requestEmailVerification(user.id);
+        // Send email verification code (ASYNC - Fire and forget)
+        this.requestEmailVerification(user.id).catch(err => {
+            console.error('[AuthService] Error initiating email verification:', err);
+        });
 
         return {
             user: {
@@ -170,17 +172,16 @@ export class AuthService {
             expiresAt
         });
 
-        // Send email
+
+        // Send email (ASYNC)
         if (process.env.NODE_ENV === 'development') {
             console.log(`[DEV] CÓDIGO DE VERIFICACIÓN PARA ${user.email} => ${code}`);
         }
 
-        try {
-            await sendVerificationEmail(user.email, code);
-        } catch (error) {
+        // Fire and forget
+        sendVerificationEmail(user.email, code).catch(error => {
             console.error('Error sending verification email:', error);
-            // We log but don't crash, user can retry
-        }
+        });
 
         return {
             message: 'Verification code sent to your email'
