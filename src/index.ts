@@ -20,43 +20,47 @@ dotenv.config();
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 3000;
 
+// Middleware - CORS configuration (robusto)
+const normalizeOrigin = (u: string) => u.trim().replace(/\/$/, '');
 
-// Normalize URLs by removing trailing slashes
-const normalizeOrigin = (u: string) => u.trim().replace(/\/+$/, "");
+const parseOrigins = (val?: string) =>
+  (val ? val.split(',') : [])
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(normalizeOrigin);
 
-// Configure allowed origins
-const allowlist = [
-  process.env.FRONTEND_URL,
-  process.env.CORS_ORIGIN,
+const allowlist = new Set<string>([
+  ...parseOrigins(process.env.FRONTEND_URL),
+  ...parseOrigins(process.env.CORS_ORIGIN),
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:3000",
-]
-  .flatMap((u) => (u ? u.split(",") : []))
-  .map(normalizeOrigin)
-  .filter(Boolean);
+].map(normalizeOrigin));
 
-// CORS configuration with origin normalization
+// Si NO configuraste allowlist en prod, no rompas la app
+const allowAll = allowlist.size === 0 || allowlist.has('*');
+
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
 
     const o = normalizeOrigin(origin);
 
-    // Always allow localhost for development
-    if (o.startsWith("http://localhost:")) return callback(null, true);
+    if (allowAll) return callback(null, true);
 
-    if (allowlist.includes(o)) {
+    // En desarrollo permitir localhost
+    if (process.env.NODE_ENV !== 'production' && o.startsWith('http://localhost:')) {
       return callback(null, true);
     }
 
-    console.warn(`[CORS] Origin not allowed: ${o}`);
+    if (allowlist.has(o)) return callback(null, true);
+
+    console.warn(`[CORS] Origin not allowed: ${origin}`);
     return callback(null, false);
   },
-  // JWT is used in headers, not cookies
-  credentials: false,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false, // JWT en headers (tu caso)
 };
 
 // Enable CORS with the configured options
