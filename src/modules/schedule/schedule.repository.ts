@@ -1,6 +1,5 @@
-import { PrismaClient, DisabledSlot, Booking, BookingStatus, OwnerSchedule } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../libs/prisma.js';
+import { DisabledSlot, Booking, BookingStatus, OwnerSchedule } from '@prisma/client';
 
 export class ScheduleRepository {
     async createDisabledSlot(data: {

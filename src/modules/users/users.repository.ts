@@ -1,6 +1,5 @@
-import { PrismaClient, User, Barbershop } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../libs/prisma.js';
+import { User, Barbershop } from '@prisma/client';
 
 export class UsersRepository {
     async findUserById(id: string) {

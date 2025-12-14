@@ -1,6 +1,5 @@
-import { PrismaClient, User, VerificationCode, VerificationPurpose } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../libs/prisma.js';
+import { User, VerificationCode, VerificationPurpose } from '@prisma/client';
 
 export class AuthRepository {
     async createUser(data: {
