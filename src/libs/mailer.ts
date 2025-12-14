@@ -27,12 +27,13 @@ export const mailer = nodemailer.createTransport({
     tls: process.env.NODE_ENV !== 'production' ? { rejectUnauthorized: false } : undefined,
 });
 
-if (process.env.NODE_ENV === 'development') {
+// Optional: Validate connection ONLY if using SMTP
+if (!process.env.RESEND_API_KEY && process.env.NODE_ENV === 'development') {
     mailer.verify((error) => {
         if (error) {
-            console.error('[MAILER] Error verificando transporter:', error);
+            console.error('[MAILER] Error verificando transporter SMTP:', error);
         } else {
-            console.log('[MAILER] Transporte de correo listo para enviar');
+            console.log('[MAILER] Transporte SMTP listo');
         }
     });
 }
@@ -43,15 +44,54 @@ export async function sendMail(options: {
     html?: string;
     text?: string;
 }) {
+    // 1. Priority: Use Resend API (HTTP) if available - Bypasses SMTP port blocks
+    if (process.env.RESEND_API_KEY) {
+        try {
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+                },
+                body: JSON.stringify({
+                    from: from, // Ensure this sender is verified in Resend
+                    to: options.to,
+                    subject: options.subject,
+                    html: options.html,
+                    text: options.text
+                })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(`Resend API Error: ${JSON.stringify(errorData)}`);
+            }
+
+            const data = await res.json() as { id: string };
+            console.log('[MAILER] Email enviado vía Resend API:', data.id);
+            return { messageId: data.id };
+        } catch (error) {
+            console.error('[MAILER] Falló envío con Resend, intentando fallback SMTP...', error);
+            // Fallback to SMTP below if desired, or just throw
+            throw error;
+        }
+    }
+
+    // 2. Fallback: SMTP (Nodemailer)
     if (!from) {
         throw new Error('EMAIL_FROM no está configurado');
     }
 
-    const info = await mailer.sendMail({
-        from,
-        ...options,
-    });
+    try {
+        const info = await mailer.sendMail({
+            from,
+            ...options,
+        });
 
-    console.log('[MAILER] Email enviado:', info.messageId);
-    return info;
+        console.log('[MAILER] Email enviado vía SMTP:', info.messageId);
+        return info;
+    } catch (error) {
+        console.error('[MAILER] Error crítico enviando email (SMTP):', error);
+        throw error;
+    }
 }
