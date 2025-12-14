@@ -13,12 +13,13 @@ import statsRoutes from './modules/stats/stats.routes';
 
 // Middleware de errores
 import { errorMiddleware } from './middleware/error.middleware';
-    
+
 // Load environment variables
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
+
 
 // Middleware - CORS configuration
 // FIX: Permite múltiples orígenes para desarrollo (Vite puede usar diferentes puertos)
@@ -67,7 +68,7 @@ app.use('/api/stats', statsRoutes);
 app.use(errorMiddleware);
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
