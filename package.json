@@ -11,7 +11,8 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
-    "start:railway": "npm run prisma:migrate:deploy && npm run prisma:seed && npm run start"
+    "postinstall": "prisma generate",
+    "start:railway": "npm run prisma:migrate:deploy && npm run start"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

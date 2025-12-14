@@ -85,9 +85,19 @@ app.use('/api/stats', statsRoutes);
 app.use(errorMiddleware);
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+// Start server
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Graceful Shutdown (evita errores npm SIGTERM en logs)
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM received. Closing server...');
+  server.close(() => {
+    console.log('✅ Server closed. Process terminated.');
+    process.exit(0);
+  });
 });
 
 export default app;
