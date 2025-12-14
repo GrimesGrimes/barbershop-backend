@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  OWNER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum VerificationPurpose {
+  REGISTRATION
+  PASSWORD_RESET
+  EMAIL_VERIFICATION
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
+model User {
+  id            String   @id @default(cuid())
+  fullName      String
+  username      String   @unique
+  email         String   @unique           // OBLIGATORIO
+  phone         String?  @unique           // OPCIONAL
+  passwordHash  String
+  role          UserRole @default(CLIENT)
+  phoneVerified Boolean  @default(false)
+  emailVerified Boolean  @default(false)   // NUEVO
+  
+  // New Profile Fields
+  avatarUrl           String?
+  gender              Gender?
+  birthDate           DateTime?
+  notes               String?
+  notificationChannel NotificationChannel @default(EMAIL)
+  marketingOptIn      Boolean             @default(false)
+  language            String              @default("es-PE")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  bookings              Booking[]
+  verificationCodes     VerificationCode[]
+  barbershop            Barbershop?
+
+  @@index([email])
+  @@index([username])
+}
+
+model Barbershop {
+  id              String    @id @default(cuid())
+  ownerId         String    @unique
+  name            String
+  phone           String?
+  address         String?
+  city            String?
+  description     String?
+  openTime        String    @default("09:00")
+  closeTime       String    @default("18:00")
+  slotMinutes     Int       @default(30)
+  logoUrl         String?
+  currency        String    @default("PEN")
+  bookingPolicy   String?
+  timeZone        String    @default("America/Lima")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  owner           User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+}
+
+model VerificationCode { // Renamed from PhoneVerificationCode
+  id        String              @id @default(cuid())
+  userId    String
+  code      String
+  purpose   VerificationPurpose
+  expiresAt DateTime
+  verified  Boolean             @default(false)
+  createdAt DateTime            @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, verified])
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  durationMin Int      @default(35) // Duration in minutes (excluding break)
+  price       Float
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  bookings Booking[]
+}
+
+model Booking {
+  id        String        @id @default(cuid())
+  clientId  String
+  serviceId String
+  startTime DateTime
+  endTime   DateTime
+  status    BookingStatus @default(PENDING)
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  client  User    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@index([startTime, endTime])
+  @@index([clientId])
+  @@index([status])
+}
+
+model OwnerSchedule {
+  id        String   @id @default(cuid())
+  weekday   Int // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime String // Format: "HH:mm" (e.g., "09:00")
+  endTime   String // Format: "HH:mm" (e.g., "18:00")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([weekday])
+}
+
+model DisabledSlot {
+  id        String   @id @default(cuid())
+  startTime DateTime
+  endTime   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([startTime, endTime])
+}
