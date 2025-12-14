@@ -23,11 +23,15 @@ const PORT = Number(process.env.PORT) || 3000;
 
 // Middleware - CORS configuration
 // FIX: Permite múltiples orígenes para desarrollo (Vite puede usar diferentes puertos)
-const allowedOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:3000'];
+const allowlist = [
+    process.env.FRONTEND_URL,              // e.g. https://frontend-barberia-production.up.railway.app
+    process.env.CORS_ORIGIN,               // Soporte legacy
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+].flatMap(u => u ? u.split(',') : []).map(u => u.trim());
 
-app.use(cors({
+const corsOptions: cors.CorsOptions = {
     origin: (origin, callback) => {
         // Permitir requests sin origin (como Postman o curl)
         if (!origin) return callback(null, true);
@@ -37,16 +41,22 @@ app.use(cors({
             return callback(null, true);
         }
 
-        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        if (allowlist.includes(origin) || allowlist.includes('*')) {
             return callback(null, true);
         }
 
-        // Si no está permitido, retornar false pero sin error para evitar crashes
+        // Bloquear explícitamente si no está en lista
         console.warn(`[CORS] Origin not allowed: ${origin}`);
-        return callback(null, false);
+        return callback(new Error(`CORS bloqueado para origin: ${origin}`));
     },
-    credentials: true
-}));
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false, // JWT en headers, no cookies
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // Habilitar preflight para todas las rutas
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
